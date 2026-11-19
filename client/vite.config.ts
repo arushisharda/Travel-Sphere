@@ -13,7 +13,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:4000',
+        target: process.env.SERVER_URL || 'http://127.0.0.1:4000',
         changeOrigin: true,
         // Itinerary drafting can take 60-90s — extend proxy timeout well beyond that
         timeout: 120000,

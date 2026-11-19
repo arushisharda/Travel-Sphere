@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
@@ -14,9 +15,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const app = express();
 
-// In production, serve the built React app from server
+// In monolithic production builds, serve client dist if available
 const isProd = env.NODE_ENV === 'production';
 const clientDistPath = path.resolve(__dirname, '../../client/dist');
+const hasClientDist = isProd && fs.existsSync(path.join(clientDistPath, 'index.html'));
 
 app.use(helmet({
   contentSecurityPolicy: isProd ? {
@@ -49,8 +51,8 @@ app.get('/health', (_req, res) => {
 
 app.use('/api', routes);
 
-// Serve React SPA in production
-if (isProd) {
+// Serve React SPA in monolithic production deployments if dist exists
+if (hasClientDist) {
   app.use(express.static(clientDistPath));
   app.get('*', (_req, res) => {
     res.sendFile(path.join(clientDistPath, 'index.html'));
