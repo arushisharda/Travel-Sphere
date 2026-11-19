@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  trips        Trip[]
+  wishlist     WishlistEntry[]
+  passport     PassportEntry[]
+  preferences  TravelPreference?
+}
+
+model Destination {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  country       String
+  region        String?
+  latitude      Float
+  longitude     Float
+  summary       String
+  imageUrl      String?
+  imageThumbUrl String?
+  imageCredit   String?
+  imageAlt      String?
+  currencyCode  String?
+  bestSeason    String?
+  budgetLevel   Int?
+  climateType   String?
+  foodScore     Int?
+  safetyNote    String?
+  safetySource  String?
+  travelStyles  String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  cultureEntries CultureEntry[]
+  trips          Trip[]
+  wishlist       WishlistEntry[]
+  passport       PassportEntry[]
+
+  @@index([country])
+  @@index([name])
+}
+
+model CultureEntry {
+  id            String    @id @default(cuid())
+  destinationId String
+  topic         String
+  title         String
+  body          String
+  contextNote   String?
+  pronunciation String?
+  sourceNote    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@index([destinationId, topic])
+}
+
+model Trip {
+  id            String    @id @default(cuid())
+  userId        String
+  destinationId String
+  title         String
+  startDate     DateTime?
+  endDate       DateTime?
+  durationDays  Int
+  preferences   String    @default("{}")
+  notes         String?
+  draft         String?
+  status        String    @default("DRAFT")
+  isDrafted     Boolean   @default(true)
+  modelUsed     String?
+  generatedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination    Destination @relation(fields: [destinationId], references: [id])
+  items          ItineraryItem[]
+  passportEntries PassportEntry[]
+
+  @@index([userId])
+}
+
+model ItineraryItem {
+  id            String   @id @default(cuid())
+  tripId        String
+  dayNumber     Int
+  timeBlock     String
+  orderIndex    Int      @default(0)
+  title         String
+  description   String?
+  category      String?
+  estimatedCost Float?
+  currencyCode  String?
+  caveat        String?
+  isUserEdited  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  trip          Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, dayNumber, orderIndex])
+}
+
+model WishlistEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  destinationId String
+  note          String?
+  createdAt     DateTime @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, destinationId])
+}
+
+model PassportEntry {
+  id            String    @id @default(cuid())
+  userId        String
+  destinationId String?
+  tripId        String?
+  stampLabel    String
+  stampedOn     DateTime  @default(now())
+  note          String?
+  createdAt     DateTime  @default(now())
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination   Destination? @relation(fields: [destinationId], references: [id])
+  trip          Trip?        @relation(fields: [tripId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+model TravelPreference {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  climate     String?
+  budgetLevel Int?
+  pace        String?
+  interests   String   @default("")
+  foodPrefs   String?
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

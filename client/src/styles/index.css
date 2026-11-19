@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@300;400;500&family=Inter:wght@400;500;600&display=swap');
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-ink);
+    line-height: 1.2;
+  }
+}
+
+@layer utilities {
+  /* Orb decoration */
+  .orb {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 9999px;
+    filter: blur(60px);
+    opacity: 0.25;
+  }
+
+  /* Font families */
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  /* Shadow helpers */
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+}
