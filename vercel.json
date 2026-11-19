@@ -15,7 +15,8 @@
     },
     "server": {
       "root": "server",
-      "framework": "express"
+      "framework": "express",
+      "buildCommand": "npm --prefix ../shared run build && prisma generate && tsc"
     }
   },
   "rewrites": [
