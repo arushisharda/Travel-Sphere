@@ -10,6 +10,7 @@ import { logger } from './lib/logger.js';
 import { routes } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { generalLimiter } from './middleware/rateLimit.js';
+import { ensureDatabaseReady } from './lib/prisma.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +48,16 @@ app.use(generalLimiter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', env: env.NODE_ENV });
+});
+
+// Ensure database schema exists in ephemeral/serverless environments (like Vercel /tmp)
+app.use(async (_req, _res, next) => {
+  try {
+    await ensureDatabaseReady();
+  } catch (err) {
+    logger.warn({ err }, 'Error during ensureDatabaseReady');
+  }
+  next();
 });
 
 app.use('/api', routes);
