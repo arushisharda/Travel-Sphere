@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
-import L from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Fix default marker icon
@@ -36,19 +36,20 @@ type WorldMapProps = {
 
 export function WorldMap({ destinations, center = [20, 0], zoom = 2, height = '400px' }: WorldMapProps) {
   const navigate = useNavigate();
+  const mapCenter: LatLngExpression = center;
   return (
     <MapContainer
-      center={center}
+      center={mapCenter}
       zoom={zoom}
       style={{ height, width: '100%', borderRadius: '0.75rem' }}
       scrollWheelZoom={false}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        attribution={'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {destinations.map((d) => (
-        <Marker key={d.slug} position={[d.latitude, d.longitude]} icon={inkDot(d.name)}>
+        <Marker key={d.slug} position={[d.latitude, d.longitude] as LatLngExpression} icon={inkDot(d.name)}>
           <Popup>
             <div className="text-sm">
               <strong>{d.name}</strong><br />
