@@ -15,7 +15,8 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env['NODE_ENV'] !== 'production') globalForPrisma.prisma = prisma;
 
 /**
- * Ensures the database schema and seed data exist in ephemeral environments like Vercel /tmp.
+ * Ensures the database has tables AND seed data.
+ * Runs on every request (cached after first success).
  */
 export async function ensureDatabaseReady(): Promise<void> {
   if (globalForPrisma.dbReadyPromise) {
@@ -23,11 +24,14 @@ export async function ensureDatabaseReady(): Promise<void> {
   }
 
   globalForPrisma.dbReadyPromise = (async () => {
+    let tablesExist = false;
+
+    // 1. Check if tables exist
     try {
-      // Check if User table exists
       await prisma.$queryRawUnsafe('SELECT 1 FROM "User" LIMIT 1');
+      tablesExist = true;
     } catch {
-      // Tables do not exist, initialize from migration.sql
+      // Tables don't exist — create them from migration SQL
       console.log('Database tables not found. Initializing schema...');
       try {
         const migrationPath = path.resolve(__dirname, '../../prisma/migrations/20261118213204_init/migration.sql');
@@ -45,21 +49,45 @@ export async function ensureDatabaseReady(): Promise<void> {
               console.warn('Migration stmt skipped:', err?.message || err);
             }
           }
-          console.log('Schema tables created successfully in SQLite.');
-
-          // Populate destinations seed if available
-          const seedSqlPath = path.resolve(__dirname, '../../prisma/culture-seed.sql');
-          if (fs.existsSync(seedSqlPath)) {
-            const seedSql = fs.readFileSync(seedSqlPath, 'utf8');
-            const seedStmts = seedSql.split(';').map((s) => s.trim()).filter((s) => s.length > 0);
-            for (const s of seedStmts) {
-              await prisma.$executeRawUnsafe(s).catch(() => {});
-            }
-            console.log('Initial destinations & culture data seeded.');
-          }
+          console.log('Schema tables created successfully.');
+          tablesExist = true;
         }
       } catch (err) {
         console.error('Failed to run initial database schema:', err);
+        return;
+      }
+    }
+
+    // 2. Check if destinations are seeded — if not, seed from full-seed.sql
+    if (tablesExist) {
+      try {
+        const count = await prisma.destination.count();
+        if (count === 0) {
+          console.log('Destination table is empty. Seeding data...');
+          const seedSqlPath = path.resolve(__dirname, '../../prisma/full-seed.sql');
+          if (fs.existsSync(seedSqlPath)) {
+            const seedSql = fs.readFileSync(seedSqlPath, 'utf8');
+            const seedStmts = seedSql
+              .split(';')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0 && !s.startsWith('--') && !s.startsWith('BEGIN') && !s.startsWith('COMMIT'));
+            for (const s of seedStmts) {
+              try {
+                await prisma.$executeRawUnsafe(s);
+              } catch (err: any) {
+                // Skip duplicate entries silently
+              }
+            }
+            const newCount = await prisma.destination.count();
+            console.log(`Seeded ${newCount} destinations and culture entries.`);
+          } else {
+            console.warn('full-seed.sql not found at', seedSqlPath);
+          }
+        } else {
+          console.log(`Database ready: ${count} destinations found.`);
+        }
+      } catch (err) {
+        console.error('Error checking/seeding destinations:', err);
       }
     }
   })();

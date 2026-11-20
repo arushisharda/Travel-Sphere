@@ -1,11 +1,12 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const defaultDbUrl = process.env['RENDER']
-  ? `file:${process.cwd()}/server/prisma/dev.db`
-  : process.env['VERCEL']
-    ? 'file:/tmp/travelsphere.db'
-    : 'file:./prisma/dev.db';
+// On Render, npm workspace runs `node dist/server.js` from /opt/render/project/src/server/
+// so file:./prisma/dev.db resolves to /opt/render/project/src/server/prisma/dev.db — correct!
+// On Vercel, use /tmp. Locally, same relative path works.
+const defaultDbUrl = process.env['VERCEL']
+  ? 'file:/tmp/travelsphere.db'
+  : 'file:./prisma/dev.db';
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

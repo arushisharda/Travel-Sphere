@@ -37,9 +37,9 @@ app.use(helmet({
   } : false,
 }));
 
-// CORS: allow any origin in dev, specific origin in prod
+// CORS: in monolithic deploy (same server = same origin), allow all origins
 app.use(cors({
-  origin: isProd ? env.CLIENT_ORIGIN : true,
+  origin: true,
   credentials: false,
 }));
 app.use(express.json({ limit: '50kb' }));
