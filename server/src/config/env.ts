@@ -1,7 +1,11 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const defaultDbUrl = process.env['VERCEL'] ? 'file:/tmp/travelsphere.db' : 'file:./prisma/dev.db';
+const defaultDbUrl = process.env['RENDER']
+  ? `file:${process.cwd()}/server/prisma/dev.db`
+  : process.env['VERCEL']
+    ? 'file:/tmp/travelsphere.db'
+    : 'file:./prisma/dev.db';
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -27,9 +31,7 @@ const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
   console.warn('Warning: Environment variables validation warning:');
   console.warn(parsed.error.flatten().fieldErrors);
-  if (!process.env['VERCEL']) {
-    process.exit(1);
-  }
+  // Never exit — use safe defaults so the server can still start
 }
 
 export const env = parsed.success ? parsed.data : schema.parse({

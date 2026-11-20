@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: travelsphere
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build -w shared && cd server && npx prisma generate && npx prisma migrate deploy && cd .. && npm run build -w server && npm run build -w client
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        value: file:./prisma/dev.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BCRYPT_COST
+        value: "10"
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: NVIDIA_API_KEY
+        value: placeholder-api-key
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: NVIDIA_MODEL
+        value: nvidia/llama-3.1-nemotron-ultra-253b-v1
+      - key: AI_TIMEOUT_MS
+        value: "45000"
+      - key: OPEN_METEO_GEOCODING_URL
+        value: https://geocoding-api.open-meteo.com/v1/search
+      - key: OPEN_METEO_FORECAST_URL
+        value: https://api.open-meteo.com/v1/forecast
+      - key: EXCHANGE_RATE_BASE_URL
+        value: https://api.frankfurter.dev/v1
+      - key: EXTERNAL_TIMEOUT_MS
+        value: "8000"

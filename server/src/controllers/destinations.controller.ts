@@ -27,7 +27,7 @@ export const listDestinations: RequestHandler = async (req, res, next) => {
     if (q.country) where.country = { contains: q.country };
     if (q.style) where.travelStyles = { contains: q.style };
     if (q.budget) where.budgetLevel = q.budget;
-    if (q.climate) where.climateType = { contains: q.climate, mode: 'insensitive' };
+    if (q.climate) where.climateType = { contains: q.climate }; // SQLite doesn't support mode: 'insensitive'
 
     const [items, total] = await Promise.all([
       prisma.destination.findMany({
